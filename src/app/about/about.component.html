@@ -67,7 +67,7 @@
     </mat-list>
   </div>
 
-  <div [hidden]="leaders">
+  <div [hidden]="leaders || errMess">
     <mat-spinner></mat-spinner><h4>Loading . . . Please Wait</h4>
   </div>
 </div>
