@@ -1,7 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, Inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { Feedback, ContactType } from "../shared/feedback";
-import { flyInOut } from "../animations/app.animation";
+import { FeedbackService } from "../services/feedback.service";
+import { flyInOut, expand } from "../animations/app.animation";
 
 @Component({
   selector: 'app-contact',
@@ -13,7 +14,8 @@ import { flyInOut } from "../animations/app.animation";
     'style': 'display: block;'
   },
   animations: [
-    flyInOut()
+    flyInOut(),
+    expand()
   ]
 })
 
@@ -23,6 +25,11 @@ export class ContactComponent implements OnInit {
   feedbackForm!: FormGroup;
   feedback!: Feedback;
   contactType = ContactType;
+  errMess!: string;
+
+  showSubmission: boolean = false;
+  loader: boolean = false;
+
 
   formErrors = {
     'firstname': '',
@@ -52,8 +59,10 @@ export class ContactComponent implements OnInit {
     },
   };
 
-  constructor(private fb: FormBuilder) {
-    this.createForm();
+  constructor(private fb: FormBuilder,
+      private feedbackService: FeedbackService,
+      @Inject ('BaseURL') public BaseURL) {
+        this.createForm();
   }
 
   ngOnInit(): void {
@@ -105,6 +114,27 @@ export class ContactComponent implements OnInit {
   onSubmit() {
     this.feedback = this.feedbackForm.value;
     console.log(this.feedback);
+    this.loader = true;
+    this.feedbackService.submitFeedback(this.feedback)
+      .subscribe(feedback => {
+        this.feedback = feedback;
+      },
+      errMess => {
+        this.errMess = <any>errMess;
+      },
+      () => {
+        setTimeout(() => {
+            this.showSubmission = true;
+            this.loader = false;
+        }, 1000);
+          setTimeout(() => {
+              this.showSubmission = false;
+          }, 4000);
+      });
+
+    this.feedbackService.getFeedback()
+      .subscribe(feedback => this.feedback = feedback,
+        errmess => this.errMess = <any>errmess);
     this.feedbackForm.reset({
       firstname: '',
       lastname: '',
